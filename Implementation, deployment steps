@@ -1,0 +1,91 @@
+
+-----Deploying Your First Smart Contract
+
+This chapter takes you through deploying a smart contract, which simulates an auction. The smart contract is provided as a Visual Studio Project Template. As part of the deployment process, the smart contract is validated to ensure it does not contain any non-deterministic elements. Once deployed, a bid is then placed on the auction to test that the smart contract was deployed correctly. The steps taken when deploying the smart contract are as follows:
+
+1. Download or clone the source.
+2. Installing the Visual Studio Project Template. 
+3. Create a smart contracts project, which will include an auction smart contract and unit tests.
+4. Validate the smart contract with the smart contract tool (SCT).
+5. Run the smart contract enabled version of the full node.
+6. Get the funds to deploy the auction smart contract and place a bid.
+7. Build and deploy the smart contract.
+8. Place a bid.
+9. Check the bid has been stored on the test network.
+
+-------COMPILATION STEPS----------------
+1. To create a new smart contracts project, navigate to File > New > Project… and create a new ‘Stratis SmartContract Project’ under ‘Visual C#’.
+This generates a new solution containing Auction.cs and some sample unit tests. Notice that Auction.cs just contains a C# class called Auction. 
+Later, you will explore the individual properties and methods on this class in detail.
+
+2. Validating your smart contract
+When you attempt to deploy a smart contract by including it in a transaction, it is tested to see if its C# code is correct and deterministic. 
+Mining nodes carry out this testing before they include a smart contract transaction in a block. In addition, other nodes on the network attempt to validate any smart contracts that they find in any blocks they receive. 
+If the smart contracts are not valid, the entire block is rejected. Therefore, you will want to know your smart contract meets the validation criteria before you try and deploy it. 
+Stratis provides SCT (a command-line tool) for validating and building smart contracts.
+
+3. The SCT tool is located within the source code of the full node that was cloned earlier. Navigate to this source code directory, and then change into the SCT project directory:
+-----------cd src/Stratis.SmartContracts.Tools.Sct
+
+The SCT uses 3 commands:
+
+Command	  Description
+build:	  Builds a contract and outputs a dll. For testing purposes.
+deploy:	  Deploys a smart contract to the given node.
+validate:	Validates smart contracts for structure and determinism.
+
+4. You are now going to validate the auction smart contract and request to see its byte code. When you begin writing your own smart contracts, you will also carry out this step for them before you deploy. Right click on your Auction.cs file tab in Visual Studio and click ‘Copy Path’. Then, back on the command line, use the validate command:
+------------dotnet run -- validate [PASTE_YOUR_PATH HERE] -sb
+
+-------------OUTPUT----------------
+
+Compilation Result
+Compilation OK: True
+
+Format Validation Result
+Format Valid: True
+
+Determinism Validation Result
+Determinism Valid: True
+
+ByteCode
+4D5A90000300000004000000F...
+
+--------------DEPLOYMENT STEPS-----------
+
+1. Getting the funds to deploy smart contracts
+To deploy a smart contract you need funds to pay the transaction fees and the gas to run the smart contract. In this case, you are also going to test the smart contract out by placing a bid, which involves calling one of its methods. There is additional expenditure involved here because you must pay for:
+
+The amount you are going to bid.
+The transaction fees involved when making the bid (sending money to a deployed auction smart contract).
+The gas to run the smart contract method.
+To get funds, you must first create a wallet and then request the funds. The next two subsections detail how to do this.
+
+2. Creating a wallet
+Because the smart contract API hasn't been integrated with any GUI wallets yet, you must use the API directly via Swagger. Whilst your node is running, navigate to http://localhost:38220/swagger.
+To create a wallet, navigate to the Wallet section and use the /api/Wallet/create call. You only need to specify a name and password in the request. For example:
+
+{
+  "name": "Meghana",
+  "password": "12345"
+}
+You now have a wallet containing some TSTRAT addresses. To see the addresses, use the /api/Wallet/addresses call, which is also found in the Wallet section. You just need to specify your wallet name and an AccountName of "account 0".
+
+3. Getting funds
+The easiest way to get some TSTRAT is use the smart contracts faucet. To receive 100 TSTRAT, specify a TSTRAT address from your wallet. Make a note of the address you use. Use this TSTRAT address for deploying and testing the smart contract.
+
+Alternatively, if you want to get more involved and earn some TSTRAT along the way, feel free to start mining! To begin mining, restart your node with an address from your wallet:
+
+dotnet run -- -addnode=13.64.119.220 -addnode=20.190.57.145 -addnode=40.68.165.12 -mine=1 -mineaddress=[YOUR_WALLET_ADDRESS]
+Use the TSTRAT address you use for the mine address when deploying and testing the smart contract.
+
+4. Deploying the auction smart contract
+While you deploy your smart contract, it is important to remember that deploying a smart contract involves several steps:
+
+-Compiling the contract.
+-Validating the contract.
+-Creating a transaction which contains the contract’s code.
+-Broadcasting the transaction to the network.
+-From the command-line, you can use the deploy command to achieve all these steps:
+
+---------------dotnet run -- deploy [PATH_TO_SMART_CONTRACT] http://localhost:38220 -wallet [YOUR_WALLET_NAME] -password [YOUR_PASSWORD] -fee 0.002 -sender=[YOUR_WALLET_ADDRESS] -params=[CONSTRUCTOR_PARAMS_IF_REQUIRED]
